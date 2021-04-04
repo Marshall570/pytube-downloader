@@ -1,18 +1,17 @@
-from subprocess import check_call
-from os import path
-from platform import system
-from tkinter import *
+import os
+import platform
+import tkinter
+from tkinter import messagebox
+from PyQt5 import QtCore, QtGui, QtWidgets
+from plyer import notification
 
 
-class Ui_App_Window(object):
-    # from PyQt5 import QtCore, QtGui, QtWidgets
-    
+class UiAppWindow(object):
     def start_download(self):
         try:
             import youtube_dl
-            from plyer import notification
 
-            download_path = path.expanduser('~') + '/Downloads/'
+            download_path = os.path.expanduser('~') + '/Downloads/'
             link = self.txt_link.text().strip()
             option = 0
 
@@ -21,12 +20,12 @@ class Ui_App_Window(object):
             else:
                 option = 2
 
-            if link.find('&list') != -1:
+            if link.find('list') != -1:
                 download_path += '%(playlist)s/%(playlist_index)s - %(title)s.%(ext)s'
             else:
                 download_path += '%(title)s/%(title)s.%(ext)s'
 
-            if system().startswith('Win'):
+            if platform.system().startswith('Win'):
                 download_path.replace('/', '\\')
 
             if option == 1:
@@ -47,26 +46,26 @@ class Ui_App_Window(object):
                     }],
                 }
 
-            notification.notify(
-                app_name='PYTUBE',
-                title='BAIXANDO ARQUIVOS...',
-                message='Aguarde enquanto os arquivos estão sendo baixados.\nVocê será notificado ao término do download.',
-                timeout=5
-            )
-
             with youtube_dl.YoutubeDL(download_options) as downloader:
-                downloader.download([link.strip()])
+                notification.notify(
+                    app_name='PYTUBE',
+                    title='BAIXANDO ARQUIVOS...',
+                    message='Aguarde enquanto os arquivos estão sendo baixados.',
+                    timeout=5
+                )
+
+                downloader.download([link])
+
+                root = tkinter.Tk()
+                root.withdraw()
+                messagebox.showinfo('CONCLUÍDO', 'Download concluído!')
+                tkinter.Tk().destroy()
 
         except Exception as e:
-            print(e)
-
-        finally:
-            notification.notify(
-                app_name='PYTUBE',
-                title='DOWNLOAD CONCLUÍDO COM SUCESSO!',
-                message='Arquivos disponíveis na pasta de Downloads',
-                timeout=5
-            )
+            root = tkinter.Tk()
+            root.withdraw()
+            messagebox.showerror('ERRO', e)
+            tkinter.Tk().destroy()
 
     def setupUi(self, App_Window):
         App_Window.setObjectName("App_Window")
@@ -164,22 +163,11 @@ class Ui_App_Window(object):
 
 if __name__ == "__main__":
     import sys
-    check_call(
-        [
-            sys.executable,
-            '-m',
-            'pip',
-            'install',
-            'youtube-dl',
-            'pyqt5',
-            'plyer',
-            '-q'
-        ]
-    )
-    from PyQt5 import QtCore, QtGui, QtWidgets
+    os.system('python -m pip install youtube-dl pyqt5 plyer')
+
     app = QtWidgets.QApplication(sys.argv)
     App_Window = QtWidgets.QMainWindow()
-    ui = Ui_App_Window()
+    ui = UiAppWindow()
     ui.setupUi(App_Window)
     App_Window.show()
     sys.exit(app.exec_())
